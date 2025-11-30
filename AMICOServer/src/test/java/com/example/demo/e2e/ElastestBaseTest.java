@@ -66,10 +66,15 @@ public class ElastestBaseTest {
     public void setupTest(TestInfo info) throws MalformedURLException {
         String testName = info.getTestMethod().get().getName();
         logger.info("##### Start test: {}", testName);
+        String downloadPath = java.nio.file.Paths.get(System.getProperty("user.dir"), "download-temporal").toString();
 
         if (eusURL == null) {
             if (browserType == null || browserType.equals(CHROME)) {
-                driver = new ChromeDriver();
+                org.openqa.selenium.chrome.ChromeOptions options = new org.openqa.selenium.chrome.ChromeOptions();
+                java.util.Map<String, Object> prefs = new java.util.HashMap<>();
+                prefs.put("download.default_directory", downloadPath);
+                options.setExperimentalOption("prefs", prefs);
+                driver = new ChromeDriver(options);
             } else {
                 driver = new FirefoxDriver();
             }

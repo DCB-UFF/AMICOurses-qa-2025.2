@@ -9,6 +9,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.nio.file.Paths;
 import java.util.List;
+import java.io.File;
 
 import org.hamcrest.text.IsEqualIgnoringCase;
 
@@ -23,6 +24,7 @@ import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
+import org.testcontainers.shaded.org.checkerframework.checker.units.qual.s;
 
 import io.github.bonigarcia.seljup.SeleniumExtension;
 
@@ -42,101 +44,31 @@ public class TestE2EFront extends ElastestBaseTest {
 		// Create course
 		goToPage("admin");
 
-		waitUntil(ExpectedConditions.elementToBeClickable(By.xpath("//span[contains(text(), 'Management')]")), "Menu Management não apareceu", 5);
+		waitUntil(ExpectedConditions.elementToBeClickable(By.xpath("//span[contains(text(), 'Management')]")), "Management is not available", 5);
 		driver.findElement(By.xpath("//span[contains(text(), 'Management')]")).click();
-		waitUntil(ExpectedConditions.elementToBeClickable(By.linkText("Add Course")), "Botão Add Course não apareceu", 5);
+		waitUntil(ExpectedConditions.elementToBeClickable(By.linkText("Add Course")), "Add Course botton is not visible", 5);
 		driver.findElement(By.linkText("Add Course")).click();
 
-		List<WebElement> name_inputs = driver.findElements(By.id("name-input"));
-		WebElement visibleInput = null;
-		for (WebElement input : name_inputs) {
-			if (input.isDisplayed()) {
-				visibleInput = input;
-				break;
-			}
-		}
-		if (visibleInput != null) {
-			visibleInput.clear();
-			visibleInput.sendKeys("test");
-		} else {
-			throw new RuntimeException("Erro: Nenhum campo visível encontrado!");
-		}
-		WebElement startDate = driver.findElement(By.name("startDate"));
-		WebElement endDate = driver.findElement(By.name("endDate"));
-		startDate.sendKeys("10/02/2019");
-		endDate.sendKeys("10/06/2019");
-		List<WebElement> newLanguage_inputs = driver.findElements(By.name("newLanguage"));
-		visibleInput = null;
-		for (WebElement input : newLanguage_inputs) {
-			if (input.isDisplayed()) {
-				visibleInput = input;
-				break;
-			}
-		}
-		if (visibleInput != null) {
-			visibleInput.clear();
-			visibleInput.sendKeys("Spanish");
-		} else {
-			throw new RuntimeException("Erro: Nenhum campo visível encontrado!");
-		}
-
-		// WebElement newLanguage = driver.findElement(By.name("newLanguage"));
-		// WebElement newType = driver.findElement(By.name("newType"));
-		List<WebElement> newType_inputs = driver.findElements(By.name("newType"));
-		visibleInput = null;
-		for (WebElement input : newType_inputs) {
-			if (input.isDisplayed()) {
-				visibleInput = input;
-				break;
-			}
-		}
-		if (visibleInput != null) {
-			visibleInput.clear();
-			visibleInput.sendKeys("test");
-		} else {
-			throw new RuntimeException("Erro: Nenhum campo visível encontrado!");
-		}
-		// WebElement newSkill = driver.findElement(By.name("newSkill1"));
-		List<WebElement> newSkill_inputs = driver.findElements(By.name("newSkill1"));
-		visibleInput = null;
-		for (WebElement input : newSkill_inputs) {
-			if (input.isDisplayed()) {
-				visibleInput = input;
-				break;
-			}
-		}
-		if (visibleInput != null) {
-			visibleInput.clear();
-			visibleInput.sendKeys("test");
-		} else {
-			throw new RuntimeException("Erro: Nenhum campo visível encontrado!");
-		}
-		// WebElement newDescription = driver.findElement(By.name("newDescription"));
-		List<WebElement> newDescription_inputs = driver.findElements(By.name("newDescription"));
-		visibleInput = null;
-		for (WebElement input : newDescription_inputs) {
-			if (input.isDisplayed()) {
-				visibleInput = input;
-				break;
-			}
-		}
-		if (visibleInput != null) {
-			visibleInput.clear();
-			visibleInput.sendKeys("test");
-		} else {
-			throw new RuntimeException("Erro: Nenhum campo visível encontrado!");
-		}		
-		WebElement image = driver.findElement(By.name("courseImage"));
-		WebElement divForm = driver.findElement(By.className("form-group"));
-		// WebElement submit = driver.findElement(By.cssSelector("button[type='submit']"));
+		WebElement name = getVisibleElement(By.id("name-input"));
+		WebElement startDate = getVisibleElement(By.name("startDate"));
+		WebElement endDate = getVisibleElement(By.name("endDate"));
+		WebElement language = getVisibleElement(By.name("newLanguage"));
+		WebElement type = getVisibleElement(By.name("newType"));	
+		WebElement skill = getVisibleElement(By.name("newSkill1"));
+		WebElement description = getVisibleElement(By.id("description-input"));
+		WebElement submit = getVisibleElement(By.cssSelector("button[type='submit']"));
+		WebElement image = getVisibleElement(By.name("courseImage"));
+		// WebElement divForm = driver.findElement(By.className("form-group"));
+		
+		sendKeysAfterClear(name, "test");
+		sendKeysAfterClear(startDate, "10/02/2019");
+		sendKeysAfterClear(endDate, "10/06/2019");
+		sendKeysAfterClear(language, "Spanish");
+		sendKeysAfterClear(type, "test");	
+		sendKeysAfterClear(skill, "test");
+		sendKeysAfterClear(description, "test");
 
 		String imageUpload = System.getProperty("user.dir") + "/src/test/resources/test.jpeg";
-		
-
-		// newLanguage.sendKeys("Spanish");
-		// newType.sendKeys("test");
-		// newSkill.sendKeys("test");
-		// newDescription.sendKeys("test");
 
 		try {
 			image.sendKeys(imageUpload);
@@ -145,22 +77,9 @@ public class TestE2EFront extends ElastestBaseTest {
 			e.printStackTrace();
 		}
 
-		sleep(2000);
+		sleep(200);
 
-		List<WebElement> submit = driver.findElements(By.cssSelector("button[type='submit']"));
-		visibleInput = null;
-		for (WebElement input : submit) {
-			if (input.isDisplayed()) {
-				visibleInput = input;
-				break;
-			}
-		}
-		if (visibleInput != null) {
-			visibleInput.click();;
-		} else {
-			throw new RuntimeException("Erro: Nenhum campo visível encontrado!");
-		}	
-		// submit.click();
+		submit.click();
 
 		waitUntil(ExpectedConditions.visibilityOfElementLocated(By.id("dataTable1")), "Failed creating course", 2);
 		log.info("Course created correctly");
@@ -182,7 +101,7 @@ public class TestE2EFront extends ElastestBaseTest {
 		buttonDeleteLastCourse.click();
 
 		// Wait remove course
-		sleep(3000);
+		sleep(400);
 
 		// Check if the course is deleted
 		lastCourse = getLastCourse();
@@ -211,7 +130,7 @@ public class TestE2EFront extends ElastestBaseTest {
 		WebElement firstCourse = buttonsCourses.get(0);
 		firstCourse.click();
 
-		sleep(2000);
+		sleep(1000);
 
 		// Go to first subject
 		waitUntil(ExpectedConditions.visibilityOfElementLocated(By.tagName("section")), "Failed opening course", 2);
@@ -220,7 +139,7 @@ public class TestE2EFront extends ElastestBaseTest {
 		WebElement firstSubject = buttonsSubjects.get(0);
 		firstSubject.click();
 
-		sleep(2000);
+		sleep(1000);
 		
 		waitUntil(ExpectedConditions.visibilityOfElementLocated(By.className("tab-pane")),
 				"Failed opening subject", 12);
@@ -231,11 +150,11 @@ public class TestE2EFront extends ElastestBaseTest {
 		WebElement firstFile = files.get(0);
 		firstFile.click();
 
-		// Check download
-		sleep(2000);
+		sleep(1000);
 		checkDownloadFile();
+
+		this.cleanDownloadFolder();
 		
-		// Logout
 		this.goToPage();
 		this.logout();
 	}
@@ -246,7 +165,7 @@ public class TestE2EFront extends ElastestBaseTest {
 		goToPage("profile/amico");
 
 		// Wait for load page
-		sleep(4000);
+		sleep(2000);
 
 		// Check if not show profile
 		String currentUrl = driver.getCurrentUrl();
@@ -337,6 +256,7 @@ public class TestE2EFront extends ElastestBaseTest {
 
 		assertThat("Download failed", 1, is(downloadItems.size()));
 		log.info("Correct download lesson of course");
+
 	}
 
 	private WebElement getLastCourse() {
@@ -352,6 +272,48 @@ public class TestE2EFront extends ElastestBaseTest {
 			Thread.sleep(time);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
+		}
+	}
+
+	public WebElement getVisibleElement(By locator){
+		List<WebElement> inputs = driver.findElements(locator);
+
+		WebElement visibleInput = null;
+
+		for (WebElement input : inputs) {
+			if (input.isDisplayed()) {
+				visibleInput = input;
+				break;
+			}
+		}
+
+		if (visibleInput == null) {
+			throw new RuntimeException("Error: No visible fields found");
+		}
+		return visibleInput;
+	}
+
+	public void sendKeysAfterClear(WebElement element, String text) {
+		element.clear();
+		element.sendKeys(text);
+	}
+
+	public void cleanDownloadFolder() {
+		try {
+			File downloadDir = new File(PATH_DOWNLOAD);
+
+			if (downloadDir.exists() && downloadDir.isDirectory()) {
+				File[] files = downloadDir.listFiles();
+				
+				if (files != null) {
+					for (File file : files) {
+						file.delete();
+					}
+				}
+				log.info("Downloads directory clean: " + PATH_DOWNLOAD);
+			}
+		} catch (Exception e) {
+			log.error("Error to clear directory: " + e.getMessage());
 		}
 	}
 }
