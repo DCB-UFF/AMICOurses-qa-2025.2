@@ -11,7 +11,9 @@ import java.nio.file.Paths;
 import java.util.List;
 
 import org.hamcrest.text.IsEqualIgnoringCase;
+
 import org.junit.jupiter.api.Test;
+import static org.hamcrest.CoreMatchers.containsString;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
@@ -38,29 +40,103 @@ public class TestE2EFront extends ElastestBaseTest {
 		this.loginUser("admin", "pass");
 
 		// Create course
-		goToPage("admin/addCourse");
+		goToPage("admin");
 
-		WebElement name = driver.findElement(By.name("newName"));
+		waitUntil(ExpectedConditions.elementToBeClickable(By.xpath("//span[contains(text(), 'Management')]")), "Menu Management não apareceu", 5);
+		driver.findElement(By.xpath("//span[contains(text(), 'Management')]")).click();
+		waitUntil(ExpectedConditions.elementToBeClickable(By.linkText("Add Course")), "Botão Add Course não apareceu", 5);
+		driver.findElement(By.linkText("Add Course")).click();
+
+		List<WebElement> name_inputs = driver.findElements(By.id("name-input"));
+		WebElement visibleInput = null;
+		for (WebElement input : name_inputs) {
+			if (input.isDisplayed()) {
+				visibleInput = input;
+				break;
+			}
+		}
+		if (visibleInput != null) {
+			visibleInput.clear();
+			visibleInput.sendKeys("test");
+		} else {
+			throw new RuntimeException("Erro: Nenhum campo visível encontrado!");
+		}
 		WebElement startDate = driver.findElement(By.name("startDate"));
 		WebElement endDate = driver.findElement(By.name("endDate"));
-		WebElement newLanguage = driver.findElement(By.name("newLanguage"));
-		WebElement newType = driver.findElement(By.name("newType"));
-		WebElement newSkill = driver.findElement(By.name("newSkill1"));
-		WebElement newDescription = driver.findElement(By.name("newDescription"));
-		WebElement image = driver.findElement(By.name("courseImage"));
-
-		WebElement divForm = driver.findElement(By.className("form-group"));
-		WebElement submit = divForm.findElement(By.tagName("button"));
-
-		String imageUpload = System.getProperty("user.dir") + "/src/test/resources/test.jpeg";
-
-		name.sendKeys("test");
 		startDate.sendKeys("10/02/2019");
 		endDate.sendKeys("10/06/2019");
-		newLanguage.sendKeys("Spanish");
-		newType.sendKeys("test");
-		newSkill.sendKeys("test");
-		newDescription.sendKeys("test");
+		List<WebElement> newLanguage_inputs = driver.findElements(By.name("newLanguage"));
+		visibleInput = null;
+		for (WebElement input : newLanguage_inputs) {
+			if (input.isDisplayed()) {
+				visibleInput = input;
+				break;
+			}
+		}
+		if (visibleInput != null) {
+			visibleInput.clear();
+			visibleInput.sendKeys("Spanish");
+		} else {
+			throw new RuntimeException("Erro: Nenhum campo visível encontrado!");
+		}
+
+		// WebElement newLanguage = driver.findElement(By.name("newLanguage"));
+		// WebElement newType = driver.findElement(By.name("newType"));
+		List<WebElement> newType_inputs = driver.findElements(By.name("newType"));
+		visibleInput = null;
+		for (WebElement input : newType_inputs) {
+			if (input.isDisplayed()) {
+				visibleInput = input;
+				break;
+			}
+		}
+		if (visibleInput != null) {
+			visibleInput.clear();
+			visibleInput.sendKeys("test");
+		} else {
+			throw new RuntimeException("Erro: Nenhum campo visível encontrado!");
+		}
+		// WebElement newSkill = driver.findElement(By.name("newSkill1"));
+		List<WebElement> newSkill_inputs = driver.findElements(By.name("newSkill1"));
+		visibleInput = null;
+		for (WebElement input : newSkill_inputs) {
+			if (input.isDisplayed()) {
+				visibleInput = input;
+				break;
+			}
+		}
+		if (visibleInput != null) {
+			visibleInput.clear();
+			visibleInput.sendKeys("test");
+		} else {
+			throw new RuntimeException("Erro: Nenhum campo visível encontrado!");
+		}
+		// WebElement newDescription = driver.findElement(By.name("newDescription"));
+		List<WebElement> newDescription_inputs = driver.findElements(By.name("newDescription"));
+		visibleInput = null;
+		for (WebElement input : newDescription_inputs) {
+			if (input.isDisplayed()) {
+				visibleInput = input;
+				break;
+			}
+		}
+		if (visibleInput != null) {
+			visibleInput.clear();
+			visibleInput.sendKeys("test");
+		} else {
+			throw new RuntimeException("Erro: Nenhum campo visível encontrado!");
+		}		
+		WebElement image = driver.findElement(By.name("courseImage"));
+		WebElement divForm = driver.findElement(By.className("form-group"));
+		// WebElement submit = driver.findElement(By.cssSelector("button[type='submit']"));
+
+		String imageUpload = System.getProperty("user.dir") + "/src/test/resources/test.jpeg";
+		
+
+		// newLanguage.sendKeys("Spanish");
+		// newType.sendKeys("test");
+		// newSkill.sendKeys("test");
+		// newDescription.sendKeys("test");
 
 		try {
 			image.sendKeys(imageUpload);
@@ -71,7 +147,20 @@ public class TestE2EFront extends ElastestBaseTest {
 
 		sleep(2000);
 
-		submit.click();
+		List<WebElement> submit = driver.findElements(By.cssSelector("button[type='submit']"));
+		visibleInput = null;
+		for (WebElement input : submit) {
+			if (input.isDisplayed()) {
+				visibleInput = input;
+				break;
+			}
+		}
+		if (visibleInput != null) {
+			visibleInput.click();;
+		} else {
+			throw new RuntimeException("Erro: Nenhum campo visível encontrado!");
+		}	
+		// submit.click();
 
 		waitUntil(ExpectedConditions.visibilityOfElementLocated(By.id("dataTable1")), "Failed creating course", 2);
 		log.info("Course created correctly");
@@ -114,7 +203,7 @@ public class TestE2EFront extends ElastestBaseTest {
 		loginUser("amico", "pass");
 
 		// Profile
-		goToPage("users/amico/profile");
+		goToPage("profile/amico");
 
 		// Go to course
 		WebElement inscribedCourses = driver.findElement(By.id("inscribed-courses"));
@@ -154,15 +243,14 @@ public class TestE2EFront extends ElastestBaseTest {
 	@Test
 	public void checkShowProfile() {
 		// Go to profile
-		goToPage("users/amico/profile");
+		goToPage("profile/amico");
 
 		// Wait for load page
 		sleep(4000);
 
 		// Check if not show profile
-		WebElement errorPage = driver.findElement(By.tagName("h2"));
-		assertThat("Failed test, show profile when it shouldn't be seen", errorPage.getText(),
-				IsEqualIgnoringCase.equalToIgnoringCase("404"));
+		String currentUrl = driver.getCurrentUrl();
+		assertThat(currentUrl, not(containsString("profile")));
 		log.info("The profile not show correctly");
 	}
 
