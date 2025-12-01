@@ -10,7 +10,11 @@ O projeto utiliza três estratégias principais de teste:
 - **Testes de Sistema (E2E)**: Via Selenium com Java/JUnit5
 
 ---
+## DOCUMENTOS AUXILIARES
 
+- **Métricas da ISO 25010**: `https://docs.google.com/document/d/1sZoDs255x6AO0GYwiYHmAsiGFbmXooW41JNlrYgEpzI/edit?usp=drivesdk`
+
+---
 ## Estrutura de Testes
 
 ```
