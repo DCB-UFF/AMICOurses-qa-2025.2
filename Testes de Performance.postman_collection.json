@@ -1,0 +1,355 @@
+{
+	"info": {
+		"_postman_id": "ae6d118f-2c83-4150-afc7-1b2c3a7e9671",
+		"name": "Testes de Performance",
+		"description": "Testes de performance para a API do Servidor AMICO.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "36724651"
+	},
+	"item": [
+		{
+			"name": "Cadastro",
+			"item": [
+				{
+					"name": "Registrar novo usuário",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"var randomInt = Math.floor(Math.random() * 1000000);",
+									"pm.collectionVariables.set(\"perf_username\", \"PerfUser_\" + randomInt);",
+									"pm.collectionVariables.set(\"perf_password\", \"pass123\");",
+									"pm.collectionVariables.set(\"perf_email\", \"perfuser_\" + randomInt + \"@test.com\");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Usuário criado (201 Created)\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"{{perf_username}}\",\n  \"password\": \"{{perf_password}}\",\n  \"userMail\": \"{{perf_email}}\",\n  \"isStudent\": true\n}"
+						},
+						"url": "{{baseUrl}}/api/users"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Acesso",
+			"item": [
+				{
+					"name": "Dados de login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Requisição aceita (200 OK)\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{perf_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{perf_username}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/api/logIn"
+					},
+					"response": []
+				},
+				{
+					"name": "Detalhes de perfil",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Perfil carregado (200 OK)\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/api/users/myProfile"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Cursos",
+			"item": [
+				{
+					"name": "Listar cursos",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Lista recebida (200 OK)\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"A lista de cursos não vazia\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.content).to.be.an('array');",
+									"    pm.expect(jsonData.content.length).to.be.above(0);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/api/courses/"
+					},
+					"response": []
+				},
+				{
+					"name": "Consultar curso individual",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Curso encontrado (200 OK)\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Dados do curso estão corretos\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.courseID).to.eql(1);",
+									"    pm.expect(jsonData.name).to.eql(\"Introduction to AI\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/api/courses/id/1/"
+					},
+					"response": []
+				},
+				{
+					"name": "Criar curso",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Curso criado com sucesso (201 Created)\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"var jsonData = pm.response.json();",
+									"if (jsonData.courseID) {",
+									"    pm.collectionVariables.set(\"newCourseId\", jsonData.courseID);",
+									"    console.log(\"Novo ID salvo para limpeza futura: \" + jsonData.courseID);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Curso Performance {{$randomInt}}\",\n  \"courseLanguage\": \"Português\",\n  \"courseDescription\": \"Criado via Testes de Performance\",\n  \"type\": \"Performance\",\n  \"startDateString\": \"01-01-2025\",\n  \"endDateString\": \"01-06-2025\",\n  \"urlImage\": \"default.jpg\"\n}"
+						},
+						"url": "{{baseUrl}}/api/courses/"
+					},
+					"response": []
+				},
+				{
+					"name": "Validar curso",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Curso novo encontrado (200 OK)\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/api/courses/id/{{newCourseId}}/"
+					},
+					"response": []
+				},
+				{
+					"name": "Excluir curso",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Deleção bem sucedida (200 OK)\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": "{{baseUrl}}/api/courses/id/{{newCourseId}}/"
+					},
+					"response": []
+				},
+				{
+					"name": "Garantir que o curso sumiu",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Recurso não existe mais (404 Not Found)\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/api/courses/id/{{newCourseId}}/"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Finalizar",
+			"item": [
+				{
+					"name": "Logout",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/logOut"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8000"
+		},
+		{
+			"key": "newCourseId",
+			"value": ""
+		},
+		{
+			"key": "perf_username",
+			"value": ""
+		},
+		{
+			"key": "perf_password",
+			"value": ""
+		},
+		{
+			"key": "perf_email",
+			"value": ""
+		}
+	]
+}
