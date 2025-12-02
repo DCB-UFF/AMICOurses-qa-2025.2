@@ -1,7 +1,7 @@
 package com.example.demo.e2e;
 
 import static java.lang.invoke.MethodHandles.lookup;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
@@ -12,7 +12,7 @@ import java.util.List;
 import java.io.File;
 
 import org.hamcrest.text.IsEqualIgnoringCase;
-
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import static org.hamcrest.CoreMatchers.containsString;
 import org.junit.jupiter.api.TestInfo;
@@ -30,7 +30,7 @@ import io.github.bonigarcia.seljup.SeleniumExtension;
 
 @ExtendWith(SeleniumExtension.class)
 public class TestE2EFront extends ElastestBaseTest {
-
+	
 	final static Logger log = getLogger(lookup().lookupClass());
 
 	final static String PATH_DOWNLOAD = Paths.get(System.getProperty("user.dir"), "download-temporal").toString();
@@ -173,6 +173,62 @@ public class TestE2EFront extends ElastestBaseTest {
 		log.info("The profile not show correctly");
 	}
 
+	@Test
+	public void checkInvalidLogin() {
+		goToPage("login");
+
+		waitUntil(ExpectedConditions.visibilityOfElementLocated(By.name("username")), "No login page", 2);
+
+		WebElement userField = driver.findElement(By.name("username"));
+		WebElement passField = driver.findElement(By.name("password"));
+
+		WebElement divSubmit = driver.findElement(By.className("form-check"));
+		WebElement submit = divSubmit.findElement(By.tagName("button"));
+
+		userField.sendKeys("invalidUser");
+		passField.sendKeys("invalidPass");
+		submit.click();
+
+		sleep(1000);
+		goToPage("profile/invalidUser");
+		String currentUrl = driver.getCurrentUrl();
+		assertThat(currentUrl, not(containsString("profile")));
+
+		log.info("Invalid login checked successfully");
+	}
+
+	@Test
+	public void checkSignUp(){
+		String username = "u" + System.currentTimeMillis();
+		String password = "password123";
+
+		goToPage("signup");
+		sleep(1000);
+
+		WebElement userField = getVisibleElement(By.name("username"));
+		WebElement emailField = getVisibleElement(By.name("userMail"));
+		WebElement passField = getVisibleElement(By.name("password"));
+		WebElement repeatPassField = getVisibleElement(By.name("repeatPassword"));
+		WebElement submit = getVisibleElement(By.cssSelector("button[type='submit']"));
+
+		sendKeysAfterClear(userField, username);
+		sendKeysAfterClear(emailField, username + "@gmail.com");
+		sendKeysAfterClear(passField, password);
+		sendKeysAfterClear(repeatPassField, password);
+		submit.click();
+
+		waitUntil2(ExpectedConditions.urlContains("/registered"), 
+                  "Don't go to '/registered'", 5);
+
+		goToPage("login");
+		loginUser(username, password);
+		goToPage("profile/" + username);
+		String currentUrl = driver.getCurrentUrl();
+        assertThat(currentUrl, containsString("profile"));
+		sleep(2000);
+        log.info("Successfully created user: " + username);
+	}
+
 	public void loginUser(String name, String pass) {
 		// Wait show form login
 		waitUntil(ExpectedConditions.visibilityOfElementLocated(By.name("username")), "No login page", 1);
@@ -235,6 +291,18 @@ public class TestE2EFront extends ElastestBaseTest {
 	}
 
 	public void waitUntil(ExpectedCondition<WebElement> expectedCondition, String errorMessage, int seconds) {
+		WebDriverWait waiter = new WebDriverWait(driver, seconds);
+
+		try {
+			waiter.until(expectedCondition);
+		} catch (org.openqa.selenium.TimeoutException timeout) {
+			log.error(errorMessage);
+			throw new org.openqa.selenium.TimeoutException(
+					"\"" + errorMessage + "\" (checked with condition) > " + timeout.getMessage());
+		}
+	}
+
+	public void waitUntil2(ExpectedCondition<Boolean> expectedCondition, String errorMessage, int seconds) {
 		WebDriverWait waiter = new WebDriverWait(driver, seconds);
 
 		try {
