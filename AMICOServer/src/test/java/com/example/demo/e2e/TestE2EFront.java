@@ -2,6 +2,7 @@ package com.example.demo.e2e;
 
 import static java.lang.invoke.MethodHandles.lookup;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
@@ -12,19 +13,20 @@ import java.util.List;
 import java.io.File;
 
 import org.hamcrest.text.IsEqualIgnoringCase;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import static org.hamcrest.CoreMatchers.containsString;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
-import org.testcontainers.shaded.org.checkerframework.checker.units.qual.s;
 
 import io.github.bonigarcia.seljup.SeleniumExtension;
 
@@ -35,11 +37,29 @@ public class TestE2EFront extends ElastestBaseTest {
 
 	final static String PATH_DOWNLOAD = Paths.get(System.getProperty("user.dir"), "download-temporal").toString();
 
-	@Test
-	public void checkCreateCourse(TestInfo testInfo) {
+	protected String userCreatedInTest;
+
+	@ParameterizedTest
+	@CsvSource({
+		// name,startDate,endDate,language,type,skill,description,msgExpected
+		"SUCCESS Course,01/10/2024,25/12/2025,English,typeTest,skillTest,descTest,SUCCESS", // Dados válidos
+		",01/10/2024,25/12/2025,English,typeTest,skillTest,descTest,FAIL", // Nome vazio
+		"FAIL Course1,01/10/2024,25/12/2025,,typeTest,skillTest,descTest,FAIL", // Language vazio
+		"FAIL Course2,01/10/2024,25/12/2025,English,typeTest,skillTest,,FAIL", // Description vazio
+		"FAIL Course3,01/10/2024,25/12/2025,English,,skillTest,descTest,FAIL", // Type vazio
+		"FAIL Course4,01/10/2024,25/12/2025,English,typeTest,,descTest,FAIL" // Skill vazio
+	})
+	public void checkCreateCourse(String name, String startDateStr, String endDateStr, String language,
+			String type,  String skill, String description, String msgExpected, TestInfo testInfo) {
 		// Login
 		goToPage("login");
 		this.loginUser("admin", "pass");
+
+		String realName = (name == null) ? "" : name;
+        String realLanguage = (language == null) ? "" : language;
+        String realType = (type == null) ? "" : type;
+        String realSkill = (skill == null) ? "" : skill;
+        String realDesc = (description == null) ? "" : description;
 
 		// Create course
 		goToPage("admin");
@@ -49,71 +69,71 @@ public class TestE2EFront extends ElastestBaseTest {
 		waitUntil(ExpectedConditions.elementToBeClickable(By.linkText("Add Course")), "Add Course botton is not visible", 5);
 		driver.findElement(By.linkText("Add Course")).click();
 
-		WebElement name = getVisibleElement(By.id("name-input"));
-		WebElement startDate = getVisibleElement(By.name("startDate"));
-		WebElement endDate = getVisibleElement(By.name("endDate"));
-		WebElement language = getVisibleElement(By.name("newLanguage"));
-		WebElement type = getVisibleElement(By.name("newType"));	
-		WebElement skill = getVisibleElement(By.name("newSkill1"));
-		WebElement description = getVisibleElement(By.id("description-input"));
+		WebElement nameField = getVisibleElement(By.id("name-input"));
+		WebElement startDateField = getVisibleElement(By.name("startDate"));
+		WebElement endDateField = getVisibleElement(By.name("endDate"));
+		WebElement languageField = getVisibleElement(By.name("newLanguage"));
+		WebElement typeField = getVisibleElement(By.name("newType"));	
+		WebElement skillField = getVisibleElement(By.name("newSkill1"));
+		WebElement descriptionField = getVisibleElement(By.id("description-input"));
 		WebElement submit = getVisibleElement(By.cssSelector("button[type='submit']"));
 		WebElement image = getVisibleElement(By.name("courseImage"));
-		// WebElement divForm = driver.findElement(By.className("form-group"));
+
+        String imageUpload = System.getProperty("user.dir") + "/src/test/resources/test.jpeg";
+        try { image.sendKeys(imageUpload); } catch (Exception e) {}
 		
-		sendKeysAfterClear(name, "test");
-		sendKeysAfterClear(startDate, "10/02/2019");
-		sendKeysAfterClear(endDate, "10/06/2019");
-		sendKeysAfterClear(language, "Spanish");
-		sendKeysAfterClear(type, "test");	
-		sendKeysAfterClear(skill, "test");
-		sendKeysAfterClear(description, "test");
-
-		String imageUpload = System.getProperty("user.dir") + "/src/test/resources/test.jpeg";
-
-		try {
-			image.sendKeys(imageUpload);
-		} catch (Exception e) {
-			log.info("Impossible to find the image");
-			e.printStackTrace();
-		}
-
+		sendKeysAfterClear(nameField, realName);
+		sendKeysAfterClear(startDateField, startDateStr);
+		sendKeysAfterClear(endDateField, endDateStr);
+		sendKeysAfterClear(languageField, realLanguage);
+		sendKeysAfterClear(typeField, realType);	
+		sendKeysAfterClear(skillField, realSkill);
+		sendKeysAfterClear(descriptionField, realDesc);
 		sleep(200);
 
 		submit.click();
 
-		waitUntil(ExpectedConditions.visibilityOfElementLocated(By.id("dataTable1")), "Failed creating course", 2);
+		waitUntil(ExpectedConditions.visibilityOfElementLocated(By.id("dataTable1")), "Failed creating course", 3);
 		log.info("Course created correctly");
 
-		// Go to last courses
 		WebElement divTable = driver.findElement(By.className("table-responsive"));
 		List<WebElement> pagesCourses = divTable.findElements(By.className("page-item"));
-		WebElement lastPageCourses = pagesCourses.get(pagesCourses.size() - 2);
-		lastPageCourses.click();
+		
+		if (pagesCourses.size() > 2) {
+            WebElement lastPageCourses = pagesCourses.get(pagesCourses.size() - 2);
+            lastPageCourses.click();
+            sleep(400); // Tempo para tabela recarregar
+        }
 
-		// Select last course
-		WebElement lastCourse = getLastCourse();
-		WebElement inputName = lastCourse.findElement(By.name("newName"));
-		WebElement buttonDeleteLastCourse = lastCourse.findElement(By.name("btnDelete"));
-		String nameLastCourse = inputName.getAttribute("value");
+        WebElement lastCourseRow = getLastCourse();
+        WebElement inputName = lastCourseRow.findElement(By.name("newName"));
+        String nameLastCourse = inputName.getAttribute("value");
 
-		// Check if the last course is equals than course added and delete it
-		assertThat("Failed adding course", nameLastCourse, IsEqualIgnoringCase.equalToIgnoringCase("test"));
-		buttonDeleteLastCourse.click();
+        if ("SUCCESS".equalsIgnoreCase(msgExpected)) {
+            assertThat("Erro: O curso não foi criado!", nameLastCourse, IsEqualIgnoringCase.equalToIgnoringCase(realName));
+            log.info("SUCESSO: Curso criado e encontrado na tabela: " + realName);
 
-		// Wait remove course
-		sleep(400);
+            WebElement btnDelete = lastCourseRow.findElement(By.name("btnDelete"));
+            btnDelete.click();
+            
+            sleep(400);
+            WebElement checkLastCourse = getLastCourse();
+            String checkName = checkLastCourse.findElement(By.name("newName")).getAttribute("value");
+            assertThat("Erro: Falha ao deletar curso", checkName, not(IsEqualIgnoringCase.equalToIgnoringCase(realName)));
 
-		// Check if the course is deleted
-		lastCourse = getLastCourse();
-		inputName = lastCourse.findElement(By.name("newName"));
-		nameLastCourse = inputName.getAttribute("value");
+        } else {
 
-		assertThat("Failed deleting course", nameLastCourse, not(IsEqualIgnoringCase.equalToIgnoringCase("test")));
-		log.info("Course deleted correctly");
+            if (!realName.isEmpty()) {
+                assertThat("ERRO GRAVE: O sistema permitiu criar curso inválido: " + realName, 
+                          nameLastCourse, not(IsEqualIgnoringCase.equalToIgnoringCase(realName)));
+            }
+            
+            log.info("SUCESSO: O curso inválido não apareceu na última posição da tabela.");
+        }
 
-		// Logout
-		this.goToPage();
-		this.logout();
+        // Logout
+        this.goToPage();
+        this.logout();
 	}
 
 	@Test
@@ -161,13 +181,11 @@ public class TestE2EFront extends ElastestBaseTest {
 
 	@Test
 	public void checkShowProfile() {
-		// Go to profile
+		// Teste para validar que o perfil de um usuário não é mostrado sem login
 		goToPage("profile/amico");
 
-		// Wait for load page
-		sleep(2000);
+		sleep(1000);
 
-		// Check if not show profile
 		String currentUrl = driver.getCurrentUrl();
 		assertThat(currentUrl, not(containsString("profile")));
 		log.info("The profile not show correctly");
@@ -197,13 +215,34 @@ public class TestE2EFront extends ElastestBaseTest {
 		log.info("Invalid login checked successfully");
 	}
 
-	@Test
-	public void checkSignUp(){
-		String username = "u" + System.currentTimeMillis();
-		String password = "password123";
+	@ParameterizedTest
+	@CsvSource({
+		// username,email,password,repeatPassword,msgExpected
+		"u,auto,pass1234,pass1234,SUCCESS", //senha menor tamanho valido
+		"u,auto,password123456,password123456,SUCCESS", //senha maior tamanho valido
+		"user1,user1@gmail.com,password123,password123,SUCCESS", //username menor tamanho valido
+		"user1user1user1,user2@gmail.com,password123,password123,SUCCESS", //username maior tamanho valido
+		"userTest2,invalidEmail,password123,password123,FAIL", //email invalido
+		"user,usertest1@gmail.com,password123,password123,FAIL", //username menor que o tamanho minimo
+		"user1user1user12,usertest1@gmail.com,password123,password123,FAIL", //username maior que o tamanho maximo
+		"userTest3,usertest1@gmail.com,passwor,passwor,FAIL", //senha menor que o tamanho minimo
+		"userTest3,usertest1@gmail.com,password1234567,password1234567,FAIL", //senha maior que o tamanho maximo
+		"userTest4,usertest1@gmail.com,password123,differentPass,FAIL" //senhas diferentes
+	})
+	public void checkSignUp(String username, String email, String password, String repeatPassword, String msgExpected) {
+
+		String realUsername = username;
+        String realEmail = email;
+		
+		if ("SUCCESS".equals(msgExpected.trim())){
+			realUsername = username + System.currentTimeMillis();
+			this.userCreatedInTest = realUsername;
+			if (email.equals("auto")){
+				realEmail = realUsername + "@gmail.com";
+			}
+		}
 
 		goToPage("signup");
-		sleep(1000);
 
 		WebElement userField = getVisibleElement(By.name("username"));
 		WebElement emailField = getVisibleElement(By.name("userMail"));
@@ -211,22 +250,33 @@ public class TestE2EFront extends ElastestBaseTest {
 		WebElement repeatPassField = getVisibleElement(By.name("repeatPassword"));
 		WebElement submit = getVisibleElement(By.cssSelector("button[type='submit']"));
 
-		sendKeysAfterClear(userField, username);
-		sendKeysAfterClear(emailField, username + "@gmail.com");
+		sendKeysAfterClear(userField, realUsername);
+		sendKeysAfterClear(emailField, realEmail);
 		sendKeysAfterClear(passField, password);
-		sendKeysAfterClear(repeatPassField, password);
+		sendKeysAfterClear(repeatPassField, repeatPassword);
 		submit.click();
 
-		waitUntil2(ExpectedConditions.urlContains("/registered"), 
-                  "Don't go to '/registered'", 5);
-
-		goToPage("login");
-		loginUser(username, password);
-		goToPage("profile/" + username);
-		String currentUrl = driver.getCurrentUrl();
-        assertThat(currentUrl, containsString("profile"));
-		sleep(2000);
-        log.info("Successfully created user: " + username);
+		if ("SUCCESS".equals(msgExpected)) {
+            waitUntil2(ExpectedConditions.urlContains("/registered"), 
+                      "Falha: Deveria ter ido para /registered", 5);
+            goToPage("login");
+            loginUser(realUsername, password);
+            goToPage("profile/" + realUsername);
+            assertThat(driver.getCurrentUrl(), containsString("profile"));
+            log.info("SUCESSO: Usuário criado e validado: " + realUsername);
+        } else {
+            sleep(1000); 
+            try {
+                WebElement campoProva = driver.findElement(By.name("repeatPassword"));
+                assertTrue(campoProva.isDisplayed(), "Erro: O campo repeatPassword existe mas está invisível!");
+                log.info("SUCESSO: O cadastro foi bloqueado e o formulário continua na tela.");
+            } catch (NoSuchElementException e) {
+                // SE ENTRAR AQUI, SIGNIFICA QUE O CAMPO SUMIU
+                this.userCreatedInTest = realUsername; 
+                throw new AssertionError("ERRO GRAVE: O campo 'repeatPassword' sumiu! O sistema cadastrou o usuário inválido?");
+            }
+		}
+		
 	}
 
 	public void loginUser(String name, String pass) {
